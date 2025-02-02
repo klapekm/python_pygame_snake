@@ -1,5 +1,4 @@
 import sys
-
 import pygame
 from pygame.locals import (
 	K_UP,
@@ -64,7 +63,7 @@ class SnakeHead(pygame.sprite.Sprite):
 		if direction == 4:
 			self.rect.move_ip(speed, 0)
 		if self.rect.colliderect(apple.rect):
-			length += 1
+			length += 10
 
 		if self.rect.left < 0:
 			self.kill()
@@ -72,16 +71,15 @@ class SnakeHead(pygame.sprite.Sprite):
 		if self.rect.right > SCREEN_WIDTH:
 			self.kill()
 			destroy()
-		if self.rect.top <= 0:
+		if self.rect.top < 0:
 			self.kill()
 			destroy()
-		if self.rect.bottom >= SCREEN_HEIGHT:
+		if self.rect.bottom > SCREEN_HEIGHT:
 			self.kill()
 			destroy()
 
 		if pygame.sprite.spritecollide(self, snake_body_parts, False):
-			self.kill()
-			gameOn = False
+			destroy()
 
 		screen.blit(self.surf, self.rect)
 
@@ -113,6 +111,15 @@ class Apple(pygame.sprite.Sprite):
 				self.rect.x -= 25
 			if self.rect.y == SCREEN_WIDTH:
 				self.rect.y -= 25
+
+		if pygame.sprite.spritecollide(self, snake_body_parts, False):
+			self.rect.x = (random.randint(0, int(SCREEN_WIDTH / 25)) * 25)
+			self.rect.y = (random.randint(0, int(SCREEN_HEIGHT / 25)) * 25)
+			if self.rect.x == SCREEN_WIDTH:
+				self.rect.x -= 25
+			if self.rect.y == SCREEN_WIDTH:
+				self.rect.y -= 25
+
 		screen.blit(self.surf, self.rect)
 
 
@@ -127,7 +134,13 @@ snake = SnakeHead()
 snake.rect.move_ip(300, 300)
 
 apple = Apple()
-apple.rect.move_ip(500, 500)
+
+apple.rect.x = (random.randint(0, int(SCREEN_WIDTH/25))*25)
+apple.rect.y = (random.randint(0, int(SCREEN_HEIGHT/25))*25)
+if apple.rect.x == SCREEN_WIDTH:
+	apple.rect.x -= 25
+if apple.rect.y == SCREEN_WIDTH:
+	apple.rect.y -= 25
 
 length = 3
 
@@ -137,6 +150,7 @@ gameOn = True
 
 
 def gameplay():
+	screen.fill((0, 0, 0))
 	global gameOn
 	achieved_length = 0
 	while gameOn:
@@ -167,6 +181,7 @@ def gameplay():
 
 
 def main_menu():
+	screen.fill((0, 0, 0))
 	while True:
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
@@ -181,7 +196,9 @@ def main_menu():
 
 def death_screen():
 	global length
-	snake.rect.move_ip(300, 300)
+	screen.fill((0, 0, 0))
+	snake.rect.x = 300
+	snake.rect.y = 300
 	length = 3
 	for s in snake_body_parts:
 		s.kill()
@@ -193,6 +210,7 @@ def death_screen():
 			if event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_SPACE:
 					main_menu()
+
 		screen.blit(death_image, (0, 0))
 		pygame.display.flip()
 
