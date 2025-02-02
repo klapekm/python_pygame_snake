@@ -29,6 +29,28 @@ def destroy():
 	gameOn = False
 
 
+class Button:
+	def __init__(self, x, y, image, scale):
+		width = image.get_width()
+		height = image.get_height()
+		self.image = pygame.transform.scale(image, (int(width*scale), int(height*scale)))
+		self.rect = self.image.get_rect()
+		self.rect.topleft = (x, y)
+		self.clicked = False
+
+	def update(self):
+		action = False
+		pos = pygame.mouse.get_pos()
+		if self.rect.collidepoint(pos):
+			if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+				self.clicked = True
+				action = True
+		if pygame.mouse.get_pressed()[0] == 0:
+			self.clicked = False
+		screen.blit(self.image, self.rect)
+		return action
+
+
 class SnakeHead(pygame.sprite.Sprite):
 	def __init__(self):
 		super(SnakeHead, self).__init__()
@@ -62,8 +84,6 @@ class SnakeHead(pygame.sprite.Sprite):
 			self.rect.move_ip(speed*-1, 0)
 		if direction == 4:
 			self.rect.move_ip(speed, 0)
-		if self.rect.colliderect(apple.rect):
-			length += 10
 
 		if self.rect.left < 0:
 			self.kill()
@@ -111,6 +131,7 @@ class Apple(pygame.sprite.Sprite):
 				self.rect.x -= 25
 			if self.rect.y == SCREEN_WIDTH:
 				self.rect.y -= 25
+			length += 10
 
 		if pygame.sprite.spritecollide(self, snake_body_parts, False):
 			self.rect.x = (random.randint(0, int(SCREEN_WIDTH / 25)) * 25)
@@ -122,6 +143,14 @@ class Apple(pygame.sprite.Sprite):
 
 		screen.blit(self.surf, self.rect)
 
+
+begin_button_image = pygame.image.load('begin_button.png')
+exit_button_image = pygame.image.load('exit_button.png')
+back_to_menu_image = pygame.image.load('back_to_menu_button.png')
+
+begin_button = Button(10, 10, begin_button_image, 8)
+exit_button = Button(10, 110, exit_button_image, 8)
+back_to_menu_button = Button(10, 10, back_to_menu_image, 8)
 
 menu_image = pygame.image.load('menu_screen.png')
 menu_image = pygame.transform.scale(menu_image, (750, 750))
@@ -187,10 +216,13 @@ def main_menu():
 			if event.type == pygame.QUIT:
 				pygame.quit()
 				sys.exit()
-			if event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_SPACE:
-					gameplay()
+
 		screen.blit(menu_image, (0, 0))
+		if exit_button.update():
+			pygame.quit()
+			sys.exit()
+		if begin_button.update():
+			gameplay()
 		pygame.display.flip()
 
 
@@ -207,11 +239,10 @@ def death_screen():
 			if event.type == pygame.QUIT:
 				pygame.quit()
 				sys.exit()
-			if event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_SPACE:
-					main_menu()
 
 		screen.blit(death_image, (0, 0))
+		if back_to_menu_button.update():
+			main_menu()
 		pygame.display.flip()
 
 
