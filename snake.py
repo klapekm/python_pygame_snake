@@ -10,11 +10,14 @@ from pygame.locals import (
 	QUIT,
 )
 import random
+import button_template as bt
 
 pygame.init()
 
-SCREEN_WIDTH = 750
-SCREEN_HEIGHT = 750
+SCREEN_WIDTH = 500
+SCREEN_HEIGHT = 500
+
+font = pygame.font.SysFont('bigcaslonttf', 48)
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption('Snake')
@@ -29,32 +32,10 @@ def destroy():
 	gameOn = False
 
 
-class Button:
-	def __init__(self, x, y, image, scale):
-		width = image.get_width()
-		height = image.get_height()
-		self.image = pygame.transform.scale(image, (int(width*scale), int(height*scale)))
-		self.rect = self.image.get_rect()
-		self.rect.topleft = (x, y)
-		self.clicked = False
-
-	def update(self):
-		action = False
-		pos = pygame.mouse.get_pos()
-		if self.rect.collidepoint(pos):
-			if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
-				self.clicked = True
-				action = True
-		if pygame.mouse.get_pressed()[0] == 0:
-			self.clicked = False
-		screen.blit(self.image, self.rect)
-		return action
-
-
 class SnakeHead(pygame.sprite.Sprite):
 	def __init__(self):
 		super(SnakeHead, self).__init__()
-		self.surf = pygame.Surface((25, 25))
+		self.surf = pygame.Surface((23, 23))
 		self.surf.fill((168, 230, 29))
 		self.rect = self.surf.get_rect()
 
@@ -66,13 +47,13 @@ class SnakeHead(pygame.sprite.Sprite):
 		if pressed_keys[K_UP]:
 			if not direction == 2:
 				direction = 1
-		if pressed_keys[K_DOWN]:
+		elif pressed_keys[K_DOWN]:
 			if not direction == 1:
 				direction = 2
-		if pressed_keys[K_LEFT]:
+		elif pressed_keys[K_LEFT]:
 			if not direction == 4:
 				direction = 3
-		if pressed_keys[K_RIGHT]:
+		elif pressed_keys[K_RIGHT]:
 			if not direction == 3:
 				direction = 4
 
@@ -107,7 +88,7 @@ class SnakeHead(pygame.sprite.Sprite):
 class SnakeBodyPart(pygame.sprite.Sprite):
 	def __init__(self):
 		super(SnakeBodyPart, self).__init__()
-		self.surf = pygame.Surface((25, 25))
+		self.surf = pygame.Surface((23, 23))
 		self.surf.fill((168, 230, 29))
 		self.rect = self.surf.get_rect()
 
@@ -118,12 +99,13 @@ class SnakeBodyPart(pygame.sprite.Sprite):
 class Apple(pygame.sprite.Sprite):
 	def __init__(self):
 		super(Apple, self).__init__()
-		self.surf = pygame.Surface((25, 25))
+		self.surf = pygame.Surface((23, 23))
 		self.surf.fill((255, 0, 0))
 		self.rect = self.surf.get_rect()
 
 	def update(self):
 		global length
+		global score
 		if self.rect.colliderect(snake.rect):
 			self.rect.x = (random.randint(0, int(SCREEN_WIDTH/25))*25)
 			self.rect.y = (random.randint(0, int(SCREEN_HEIGHT/25))*25)
@@ -131,7 +113,8 @@ class Apple(pygame.sprite.Sprite):
 				self.rect.x -= 25
 			if self.rect.y == SCREEN_WIDTH:
 				self.rect.y -= 25
-			length += 10
+			length += 1
+			score += 1
 
 		if pygame.sprite.spritecollide(self, snake_body_parts, False):
 			self.rect.x = (random.randint(0, int(SCREEN_WIDTH / 25)) * 25)
@@ -144,19 +127,30 @@ class Apple(pygame.sprite.Sprite):
 		screen.blit(self.surf, self.rect)
 
 
+eazy_difficulty_image = pygame.image.load('eazy_difficulty_text.png')
+normal_difficulty_image = pygame.image.load('normal_difficulty_text.png')
+hard_difficulty_image = pygame.image.load('hard_difficulty_text.png')
+difficulty_selection = bt.Button(10, 300, eazy_difficulty_image, 6)
+
+difficulty = 0
+difficulty_to_speed = {0: 6, 1: 9, 2: 11}
+
+game_speed = difficulty_to_speed[difficulty]
+
+
 begin_button_image = pygame.image.load('begin_button.png')
 exit_button_image = pygame.image.load('exit_button.png')
 back_to_menu_image = pygame.image.load('back_to_menu_button.png')
 
-begin_button = Button(10, 10, begin_button_image, 8)
-exit_button = Button(10, 110, exit_button_image, 8)
-back_to_menu_button = Button(10, 10, back_to_menu_image, 8)
+begin_button = bt.Button(10, 10, begin_button_image, 6)
+exit_button = bt.Button(10, 110, exit_button_image, 6)
+back_to_menu_button = bt.Button(10, 10, back_to_menu_image, 5)
 
 menu_image = pygame.image.load('menu_screen.png')
-menu_image = pygame.transform.scale(menu_image, (750, 750))
+menu_image = pygame.transform.scale(menu_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
 death_image = pygame.image.load('death_screen.png')
-death_image = pygame.transform.scale(death_image, (750, 750))
+death_image = pygame.transform.scale(death_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
 snake_body_parts = pygame.sprite.Group()
 snake = SnakeHead()
@@ -179,9 +173,12 @@ gameOn = True
 
 
 def gameplay():
-	screen.fill((0, 0, 0))
 	global gameOn
+	global score
+	global game_speed
+	screen.fill((0, 0, 0))
 	achieved_length = 0
+	score = 0
 	while gameOn:
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
@@ -206,10 +203,12 @@ def gameplay():
 		apple.update()
 		snake.update(keys)
 		pygame.display.flip()
-		clock.tick(5)
+		clock.tick(game_speed)
 
 
 def main_menu():
+	global game_speed
+	global difficulty
 	screen.fill((0, 0, 0))
 	while True:
 		for event in pygame.event.get():
@@ -218,16 +217,31 @@ def main_menu():
 				sys.exit()
 
 		screen.blit(menu_image, (0, 0))
-		if exit_button.update():
+		if exit_button.update(screen):
 			pygame.quit()
 			sys.exit()
-		if begin_button.update():
+		if begin_button.update(screen):
 			gameplay()
+		if difficulty_selection.update(screen):
+			difficulty = (difficulty+1) % 3
+			print(difficulty)
+			if difficulty == 0:
+				difficulty_selection.swap_image(10, 300, eazy_difficulty_image, 6)
+				game_speed = difficulty_to_speed[difficulty]
+			elif difficulty == 1:
+				difficulty_selection.swap_image(10, 300, normal_difficulty_image, 6)
+				game_speed = difficulty_to_speed[difficulty]
+			elif difficulty == 2:
+				difficulty_selection.swap_image(10, 300, hard_difficulty_image, 6)
+				game_speed = difficulty_to_speed[difficulty]
 		pygame.display.flip()
 
 
 def death_screen():
 	global length
+	global score
+	img = font.render(str(score), True, (0, 0, 0))
+	score = 0
 	screen.fill((0, 0, 0))
 	snake.rect.x = 300
 	snake.rect.y = 300
@@ -241,8 +255,10 @@ def death_screen():
 				sys.exit()
 
 		screen.blit(death_image, (0, 0))
-		if back_to_menu_button.update():
+		if back_to_menu_button.update(screen):
 			main_menu()
+
+		screen.blit(img, (372, 410))
 		pygame.display.flip()
 
 
