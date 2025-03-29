@@ -1,5 +1,7 @@
 # Snake game in pyGame
 
+![Snake in Python](snake_screenshot_0.png)
+
 
 ## How to download and run
 
@@ -13,5 +15,5 @@
 - Click EXIT to close the game
 - Use the option button to change the difficulty
 
-![Snake in Python](snake_screenshot_0.png)
 
+![Snake in Python](snake_screenshot_1.png)
